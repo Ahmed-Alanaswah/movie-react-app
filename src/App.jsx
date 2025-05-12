@@ -5,6 +5,8 @@ import Search from "./components/Search";
 import Spinner from "./components/Spinner";
 import MovieCard from "./components/MovieCard";
 import { useDebounce } from "react-use";
+import { getTrendingMovies, updateSearchCount } from "./appawrite";
+
 const API_BASE_URL = "https://api.themoviedb.org/3";
 const API_KEY = import.meta.env.VITE_TMDB_API_KEY;
 const options = {
@@ -16,13 +18,27 @@ const options = {
 };
 
 function App() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [errorMessage, setErrorMessage] = useState(null);
-  const [movies, setMovies] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
   const [debounceSearchTerm, setDebounceSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const [movies, setMovies] = useState([]);
+  const [errorMessage, setErrorMessage] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const [trendingMovies, setTrendingMovies] = useState([]);
+  const [errortrendingMessage, setErrorTrendingMessage] = useState(null);
+  const [isLoadingTrendig, setIsLoadingTreding] = useState(false);
 
   useDebounce(() => setDebounceSearchTerm(searchTerm), 2000, [searchTerm]);
+
+  const loadTrendingMovies = async () => {
+    try {
+      const movies = await getTrendingMovies();
+      setTrendingMovies(movies);
+    } catch (error) {
+      console.error(`error fetching trending movies ${error}`);
+    }
+  };
 
   const fetcMovies = async (query) => {
     try {
@@ -48,6 +64,10 @@ function App() {
         return;
       }
       setMovies(data.results || []);
+
+      if (query && data.results.length > 0) {
+        await updateSearchCount(query, data.results[0]);
+      }
     } catch (error) {
       console.error(`error fetching movies ${error}`);
       setErrorMessage("error fetching movies. please try again later");
@@ -60,6 +80,9 @@ function App() {
     fetcMovies(debounceSearchTerm);
   }, [debounceSearchTerm]);
 
+  useEffect(() => {
+    loadTrendingMovies();
+  }, []);
   return (
     <main>
       <div className="pattern">
@@ -72,9 +95,24 @@ function App() {
             </h1>
             <Search searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
           </header>
-          <section className="all-movies">
-            <h2 className="mt-[40px]">All Movies</h2>
 
+          {trendingMovies.length > 0 ? (
+            <section className="trending">
+              <h2>Trending Movies</h2>
+              <ul>
+                {trendingMovies.map((movie, index) => (
+                  <li key={movie.$id}>
+                    <p>{index + 1}</p>
+                    <img src={movie.poster_url} alt={movie.title} />
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : (
+            ""
+          )}
+
+          <section className="all-movies">
             {isLoading ? (
               <Spinner />
             ) : errorMessage ? (
