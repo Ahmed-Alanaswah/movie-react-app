@@ -20,7 +20,7 @@ const useMovies = () => {
     },
   };
 
-  useDebounce(() => setDebounceSearchTerm(searchTerm), 2000, [searchTerm]);
+  useDebounce(() => setDebounceSearchTerm(searchTerm), 500, [searchTerm]);
 
   const fetcMovies = async (query) => {
     try {
