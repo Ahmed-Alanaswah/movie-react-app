@@ -2,18 +2,21 @@ import "./App.css";
 import MoviesList from "./components/MoviesList";
 import TrendingMoviesList from "./components/TrendingMoviesList";
 import Header from "./components/Header";
+import { ErrorFallback, ErrorBoundary } from "./components/ErrorBoundary";
 
 function App() {
   return (
-    <main>
-      <div className="pattern">
-        <div className="wrapper">
-          <Header />
-          <TrendingMoviesList />
-          <MoviesList />
+    <ErrorBoundary FallbackComponent={ErrorFallback}>
+      <main>
+        <div className="pattern">
+          <div className="wrapper">
+            <Header />
+            <TrendingMoviesList />
+            <MoviesList />
+          </div>
         </div>
-      </div>
-    </main>
+      </main>
+    </ErrorBoundary>
   );
 }
 
