@@ -1,8 +1,12 @@
 import { useState, useEffect } from "react";
+import { updateSearchCount } from "../appawrite";
 import { useDebounce } from "react-use";
 import { useSearch } from "../context/SearchContext ";
 
 const useMovies = () => {
+  const [movies, setMovies] = useState([]);
+  const [errorMessage, setErrorMessage] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
   const [debounceSearchTerm, setDebounceSearchTerm] = useState("");
   const { searchTerm } = useSearch();
 
@@ -18,59 +22,45 @@ const useMovies = () => {
 
   useDebounce(() => setDebounceSearchTerm(searchTerm), 500, [searchTerm]);
 
-  //   const fetcMovies = async (query) => {
-  //     try {
-  //       setIsLoading(true);
-  //       setErrorMessage("");
+  const fetcMovies = async (query) => {
+    try {
+      setIsLoading(true);
+      setErrorMessage("");
 
-  //       const end_point = query
-  //         ? `${API_BASE_URL}/search/movie?include_adult=false&language=en-US&page=1&query=${encodeURIComponent(
-  //             query
-  //           )}`
-  //         : `${API_BASE_URL}/discover/movie?include_adult=false&include_video=false&language=en-US&page=1&sort_by=popularity.desc`;
-  //       const response = await fetch(end_point, options);
+      const end_point = query
+        ? `${API_BASE_URL}/search/movie?include_adult=false&language=en-US&page=1&query=${encodeURIComponent(
+            query
+          )}`
+        : `${API_BASE_URL}/discover/movie?include_adult=false&include_video=false&language=en-US&page=1&sort_by=popularity.desc`;
+      const response = await fetch(end_point, options);
 
-  //       if (!response.ok) {
-  //         throw new Error("faild to fetch movies");
-  //       }
-  //       const data = await response.json();
+      if (!response.ok) {
+        throw new Error("faild to fetch movies");
+      }
+      const data = await response.json();
 
-  //       if (!data.results || data.results.length === 0) {
-  //         setErrorMessage(data.Error || "faild to fetch movies");
-  //         setMovies([]);
-  //         return;
-  //       }
-  //       setMovies(data.results || []);
+      if (!data.results || data.results.length === 0) {
+        setErrorMessage(data.Error || "faild to fetch movies");
+        setMovies([]);
+        return;
+      }
+      setMovies(data.results || []);
 
-  //       if (query && data.results.length > 0) {
-  //         await updateSearchCount(query, data.results[0]);
-  //       }
-  //     } catch (error) {
-  //       console.error(`error fetching movies ${error}`);
-  //       setErrorMessage("error fetching movies. please try again later");
-  //     } finally {
-  //       setIsLoading(false);
-  //     }
-  //   };
-  async function fetcMovies(query) {
-    const end_point = query
-      ? `${API_BASE_URL}/search/movie?include_adult=false&language=en-US&page=1&query=${encodeURIComponent(
-          query
-        )}`
-      : `${API_BASE_URL}/discover/movie?include_adult=false&include_video=false&language=en-US&page=1&sort_by=popularity.desc`;
-
-    const response = await fetch(end_point, options);
-
-    if (!response.ok) {
-      throw new Error("Failed to fetch data");
+      if (query && data.results.length > 0) {
+        await updateSearchCount(query, data.results[0]);
+      }
+    } catch (error) {
+      console.error(`error fetching movies ${error}`);
+      setErrorMessage("error fetching movies. please try again later");
+    } finally {
+      setIsLoading(false);
     }
-    return response.json();
-  }
+  };
+
   useEffect(() => {
     fetcMovies(debounceSearchTerm);
   }, [debounceSearchTerm]);
-
-  return { fetcMovies };
+  return { movies, errorMessage, isLoading };
 };
 
 export default useMovies;
